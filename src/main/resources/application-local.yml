@@ -1,0 +1,27 @@
+# AI
+langchain4j:
+  open-ai:
+    chat-model:
+      base-url: https://api.deepseek.com
+      api-key: sk-ad38e95bd4944a84888bcee5f96ec57d
+      model-name: deepseek-chat
+      # 开启日志
+      log-requests: true
+      log-responses: true
+      # 设置一下输出长度，防止 AI生成的JSON 被半路截断
+      max-tokens: 8192
+      # 确保模型输出合法的JSON字符串
+      strict-json-schema: true
+      response-format: json_object
+      # 重试次数
+      max-retries: 1
+    streaming-chat-model:
+      base-url: https://api.deepseek.com
+      api-key: sk-ad38e95bd4944a84888bcee5f96ec57d
+      model-name: deepseek-chat
+      # 设置一下输出长度，防止 AI生成的JSON 被半路截断
+      max-tokens: 8192
+      # 开启日志
+      log-requests: true
+      log-responses: true
+
