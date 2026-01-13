@@ -8,7 +8,7 @@ import com.lin.linaicodemother.exception.ErrorCode;
 import com.lin.linaicodemother.exception.ThrowUtils;
 import com.lin.linaicodemother.mapper.UserMapper;
 import com.lin.linaicodemother.mapstruct.UserModuleMapper;
-import com.lin.linaicodemother.model.dto.UserQueryRequest;
+import com.lin.linaicodemother.model.dto.user.UserQueryRequest;
 import com.lin.linaicodemother.model.entity.User;
 import com.lin.linaicodemother.model.enums.UserRoleEnum;
 import com.lin.linaicodemother.model.vo.LoginUserVO;

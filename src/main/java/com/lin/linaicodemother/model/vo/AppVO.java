@@ -1,29 +1,16 @@
-package com.lin.linaicodemother.model.entity;
+package com.lin.linaicodemother.model.vo;
 
-import com.mybatisflex.annotation.Id;
-import com.mybatisflex.annotation.KeyType;
-import com.mybatisflex.annotation.Table;
-import com.mybatisflex.core.keygen.KeyGenerators;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 应用 实体类。
- *
- * @author Lin
+ * 应用封装类
  */
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Table("app")
-public class App implements Serializable {
+public class AppVO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -31,7 +18,6 @@ public class App implements Serializable {
     /**
      * id
      */
-    @Id(keyType = KeyType.Generator, value = KeyGenerators.snowFlakeId)
     private Long id;
 
     /**
@@ -75,11 +61,6 @@ public class App implements Serializable {
     private Long userId;
 
     /**
-     * 编辑时间
-     */
-    private LocalDateTime editTime;
-
-    /**
      * 创建时间
      */
     private LocalDateTime createTime;
@@ -90,8 +71,8 @@ public class App implements Serializable {
     private LocalDateTime updateTime;
 
     /**
-     * 是否删除
+     * 创建用户信息
      */
-    private Integer isDelete;
+    private UserVO user;
 
-}
+} 

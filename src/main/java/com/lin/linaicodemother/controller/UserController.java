@@ -9,7 +9,7 @@ import com.lin.linaicodemother.constant.UserConstant;
 import com.lin.linaicodemother.exception.BusinessException;
 import com.lin.linaicodemother.exception.ErrorCode;
 import com.lin.linaicodemother.exception.ThrowUtils;
-import com.lin.linaicodemother.model.dto.*;
+import com.lin.linaicodemother.model.dto.user.*;
 import com.lin.linaicodemother.model.entity.User;
 import com.lin.linaicodemother.model.vo.LoginUserVO;
 import com.lin.linaicodemother.model.vo.UserVO;

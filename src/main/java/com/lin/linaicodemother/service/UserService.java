@@ -1,6 +1,6 @@
 package com.lin.linaicodemother.service;
 
-import com.lin.linaicodemother.model.dto.UserQueryRequest;
+import com.lin.linaicodemother.model.dto.user.UserQueryRequest;
 import com.lin.linaicodemother.model.entity.User;
 import com.lin.linaicodemother.model.vo.LoginUserVO;
 import com.lin.linaicodemother.model.vo.UserVO;

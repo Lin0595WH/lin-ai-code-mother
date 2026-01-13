@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS app
     code_gen_type varchar(64)                        NULL COMMENT '代码生成类型（枚举）',
     deploy_key    varchar(64)                        NULL COMMENT '部署标识',
     deployed_time datetime                           NULL COMMENT '部署时间',
-    priority      int      DEFAULT 0                 NOT NULL COMMENT '优先级',
+    priority      int      DEFAULT 0                 NOT NULL COMMENT '优先级(99精选应用0默认应用)',
     user_id       bigint                             NOT NULL COMMENT '创建用户id',
     edit_time     datetime DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '编辑时间',
     create_time   datetime DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',

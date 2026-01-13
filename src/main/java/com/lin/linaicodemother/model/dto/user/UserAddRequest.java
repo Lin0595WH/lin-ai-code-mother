@@ -1,24 +1,18 @@
-package com.lin.linaicodemother.model.dto;
+package com.lin.linaicodemother.model.dto.user;
 
-
-import com.lin.linaicodemother.common.PageRequest;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.io.Serial;
 import java.io.Serializable;
 
-@EqualsAndHashCode(callSuper = true)
+/**
+ * 用户创建请求
+ */
 @Data
-public class UserQueryRequest extends PageRequest implements Serializable {
+public class UserAddRequest implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
-
-    /**
-     * id
-     */
-    private Long id;
 
     /**
      * 用户昵称
@@ -31,12 +25,17 @@ public class UserQueryRequest extends PageRequest implements Serializable {
     private String userAccount;
 
     /**
-     * 简介
+     * 用户头像
+     */
+    private String userAvatar;
+
+    /**
+     * 用户简介
      */
     private String userProfile;
 
     /**
-     * 用户角色：user/admin/ban
+     * 用户角色: user, admin
      */
     private String userRole;
 

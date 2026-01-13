@@ -1,4 +1,4 @@
-package com.lin.linaicodemother.model.dto;
+package com.lin.linaicodemother.model.dto.user;
 
 import lombok.Data;
 
