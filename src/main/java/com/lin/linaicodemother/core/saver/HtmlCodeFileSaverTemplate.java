@@ -25,8 +25,8 @@ public class HtmlCodeFileSaverTemplate extends CodeFileSaverTemplate<HtmlCodeRes
     }
 
     @Override
-    protected void validateInput(HtmlCodeResult result) {
-        super.validateInput(result);
+    protected void validateInput(HtmlCodeResult result, Long appId) {
+        super.validateInput(result, appId);
         // HTML 代码不能为空
         if (CharSequenceUtil.isBlank(result.getHtmlCode())) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "HTML 代码不能为空");

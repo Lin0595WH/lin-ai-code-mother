@@ -1,7 +1,10 @@
 package com.lin.linaicodemother.controller;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.lin.linaicodemother.annotation.AuthCheck;
 import com.lin.linaicodemother.common.BaseResponse;
 import com.lin.linaicodemother.common.DeleteRequest;
@@ -25,10 +28,15 @@ import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 应用 控制层。
@@ -43,6 +51,46 @@ public class AppController {
     private final AppService appService;
 
     private final UserService userService;
+
+    /**
+     * 应用聊天生成代码（流式 SSE）
+     *
+     * @param appId   应用 ID
+     * @param message 用户消息
+     * @param request 请求对象
+     * @return 生成结果流
+     */
+    @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<String>> chatToGenCode(@RequestParam Long appId,
+                                                       @RequestParam String message,
+                                                       HttpServletRequest request) {
+        // 参数校验
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID无效");
+        ThrowUtils.throwIf(CharSequenceUtil.isBlank(message), ErrorCode.PARAMS_ERROR, "用户消息不能为空");
+        List<String> sensitive = appService.checkSensitive(message);
+        ThrowUtils.throwIf(CollUtil.isNotEmpty(sensitive), ErrorCode.PARAMS_ERROR, "提示词中包含敏感词汇:" + sensitive);
+        // 获取当前登录用户
+        User loginUser = userService.getLoginUser(request);
+        // 调用服务生成代码（流式）
+        Flux<String> contentFlux = appService.chatToGenCode(appId, message, loginUser);
+        return contentFlux
+                // 处理空格丢失问题：包装一层json
+                .map(chunk -> {
+                    String jsonData = JSONUtil.toJsonStr(Map.of("d", chunk));
+                    return ServerSentEvent.<String>builder()
+                            .data(jsonData)
+                            .build();
+                })
+                // concatWith: 按顺序拼接两个数据流： 先发送原 SSE 数据流的所有事件；原数据流完全发送完毕（正常结束）后，再发送 concatWith 里的数据流；
+                .concatWith(Mono.just(
+                        // 发送结束事件 区分正常结束和异常中断
+                        ServerSentEvent.<String>builder()
+                                .event("done")
+                                .data("")
+                                .build()
+                ));
+    }
+
 
     /**
      * 创建应用

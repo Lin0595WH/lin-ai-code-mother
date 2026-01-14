@@ -1,12 +1,18 @@
 package com.lin.linaicodemother.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.github.houbb.sensitive.word.core.SensitiveWordHelper;
+import com.lin.linaicodemother.core.AiCodeGeneratorFacade;
 import com.lin.linaicodemother.exception.BusinessException;
 import com.lin.linaicodemother.exception.ErrorCode;
+import com.lin.linaicodemother.exception.ThrowUtils;
 import com.lin.linaicodemother.mapper.AppMapper;
 import com.lin.linaicodemother.mapstruct.AppModuleMapper;
 import com.lin.linaicodemother.model.dto.app.AppQueryRequest;
 import com.lin.linaicodemother.model.entity.App;
 import com.lin.linaicodemother.model.entity.User;
+import com.lin.linaicodemother.model.enums.CodeGenTypeEnum;
 import com.lin.linaicodemother.model.vo.AppVO;
 import com.lin.linaicodemother.model.vo.UserVO;
 import com.lin.linaicodemother.service.AppService;
@@ -15,6 +21,7 @@ import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Map;
@@ -33,6 +40,54 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     private final UserService userService;
 
     private final AppModuleMapper appModuleMapper;
+
+    private final AiCodeGeneratorFacade aiCodeGeneratorFacade;
+
+    /**
+     * 通过对话生成应用代码
+     *
+     * @param appId     应用 ID
+     * @param message   提示词
+     * @param loginUser 登录用户
+     * @return
+     */
+    @Override
+    public Flux<String> chatToGenCode(Long appId, String message, User loginUser) {
+        // 1. 参数校验
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用 ID 错误");
+        ThrowUtils.throwIf(CharSequenceUtil.isBlank(message), ErrorCode.PARAMS_ERROR, "提示词不能为空");
+        List<String> sensitive = checkSensitive(message);
+        ThrowUtils.throwIf(CollUtil.isNotEmpty(sensitive), ErrorCode.PARAMS_ERROR, "提示词中包含敏感词汇:" + sensitive);
+        // 2. 查询应用信息
+        App app = this.getById(appId);
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        // 3. 权限校验，仅本人可以和自己的应用对话
+        if (!app.getUserId().equals(loginUser.getId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限访问该应用");
+        }
+        // 4. 获取应用的代码生成类型
+        String codeGenType = app.getCodeGenType();
+        CodeGenTypeEnum codeGenTypeEnum = CodeGenTypeEnum.getEnumByValue(codeGenType);
+        if (codeGenTypeEnum == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "应用代码生成类型错误");
+        }
+        // 5. 调用 AI 生成代码
+        return aiCodeGeneratorFacade.generateAndSaveCodeStream(message, codeGenTypeEnum, appId);
+    }
+
+    /**
+     * 判断传入内容是否含有敏感词
+     *
+     * @param content 文本内容
+     * @return List<String> 敏感词列表
+     */
+    @Override
+    public List<String> checkSensitive(String content) {
+        if (CharSequenceUtil.isBlank(content)) {
+            return List.of();
+        }
+        return SensitiveWordHelper.findAll(content);
+    }
 
     /**
      * 获取应用封装类
