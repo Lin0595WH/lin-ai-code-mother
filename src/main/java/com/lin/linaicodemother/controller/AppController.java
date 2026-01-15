@@ -3,7 +3,6 @@ package com.lin.linaicodemother.controller;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.lin.linaicodemother.annotation.AuthCheck;
 import com.lin.linaicodemother.common.BaseResponse;
@@ -14,10 +13,7 @@ import com.lin.linaicodemother.constant.UserConstant;
 import com.lin.linaicodemother.exception.BusinessException;
 import com.lin.linaicodemother.exception.ErrorCode;
 import com.lin.linaicodemother.exception.ThrowUtils;
-import com.lin.linaicodemother.model.dto.app.AppAddRequest;
-import com.lin.linaicodemother.model.dto.app.AppAdminUpdateRequest;
-import com.lin.linaicodemother.model.dto.app.AppQueryRequest;
-import com.lin.linaicodemother.model.dto.app.AppUpdateRequest;
+import com.lin.linaicodemother.model.dto.app.*;
 import com.lin.linaicodemother.model.entity.App;
 import com.lin.linaicodemother.model.entity.User;
 import com.lin.linaicodemother.model.enums.CodeGenTypeEnum;
@@ -91,6 +87,29 @@ public class AppController {
                 ));
     }
 
+    /**
+     * 应用部署
+     *
+     * @param appDeployRequest 部署请求
+     * @param request          请求
+     * @return 部署 URL
+     */
+    @PostMapping("/deploy")
+    public BaseResponse<String> deployApp(@RequestBody AppDeployRequest appDeployRequest, HttpServletRequest request) {
+        // 检查部署请求是否为空
+        ThrowUtils.throwIf(appDeployRequest == null, ErrorCode.PARAMS_ERROR);
+        // 获取应用 ID
+        Long appId = appDeployRequest.getAppId();
+        // 检查应用 ID 是否为空
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用 ID 不能为空");
+        // 获取当前登录用户
+        User loginUser = userService.getLoginUser(request);
+        // 调用服务部署应用
+        String deployUrl = appService.deployApp(appId, loginUser);
+        // 返回部署 URL
+        return ResultUtils.success(deployUrl);
+    }
+
 
     /**
      * 创建应用
@@ -104,7 +123,7 @@ public class AppController {
         ThrowUtils.throwIf(appAddRequest == null, ErrorCode.PARAMS_ERROR);
         // 参数校验
         String initPrompt = appAddRequest.getInitPrompt();
-        ThrowUtils.throwIf(StrUtil.isBlank(initPrompt), ErrorCode.PARAMS_ERROR, "初始化 prompt 不能为空");
+        ThrowUtils.throwIf(CharSequenceUtil.isBlank(initPrompt), ErrorCode.PARAMS_ERROR, "初始化 prompt 不能为空");
         // 获取当前登录用户
         User loginUser = userService.getLoginUser(request);
         // 构造入库对象

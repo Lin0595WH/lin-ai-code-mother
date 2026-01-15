@@ -1,8 +1,12 @@
 package com.lin.linaicodemother.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
 import com.github.houbb.sensitive.word.core.SensitiveWordHelper;
+import com.lin.linaicodemother.constant.AppConstant;
 import com.lin.linaicodemother.core.AiCodeGeneratorFacade;
 import com.lin.linaicodemother.exception.BusinessException;
 import com.lin.linaicodemother.exception.ErrorCode;
@@ -20,9 +24,12 @@ import com.lin.linaicodemother.service.UserService;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
+import java.io.File;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -33,6 +40,7 @@ import java.util.stream.Collectors;
  *
  * @author Lin
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppService {
@@ -73,6 +81,58 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         }
         // 5. 调用 AI 生成代码
         return aiCodeGeneratorFacade.generateAndSaveCodeStream(message, codeGenTypeEnum, appId);
+    }
+
+    /**
+     * 部署应用
+     *
+     * @param appId     应用 ID
+     * @param loginUser 登录用户
+     * @return 可访问的部署url地址
+     */
+    @Override
+    public String deployApp(Long appId, User loginUser) {
+        // 1.校验
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用 ID 错误");
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        // 2.校验应用信息
+        App app = this.getById(appId);
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        // 3.权限校验:仅本人可以部署应用
+        ThrowUtils.throwIf(!app.getUserId().equals(loginUser.getId()), ErrorCode.NO_AUTH_ERROR, "无操作权限");
+        // 4.检查是否已有部署key
+        // 没有就生成部署key(6位，字母+数字)
+        String deployKey = app.getDeployKey();
+        if (CharSequenceUtil.isBlank(deployKey)) {
+            deployKey = RandomUtil.randomString(6);
+        }
+        // 5.获取代码生成类型，获取文件生成路径
+        String codeGenType = app.getCodeGenType();
+        String sourceDirName = codeGenType + "_" + appId;
+        // 6.判断路径是否真实存在
+        String sourceDirPath = AppConstant.CODE_OUTPUT_ROOT_DIR + File.separator + sourceDirName;
+        if (!FileUtil.isDirectory(sourceDirPath)) {
+            log.error("应用部署失败，应用代码路径{}不存在，请先生成应用:", sourceDirPath);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "应用部署失败，应用代码路径不存在，请先生成应用");
+        }
+        // 7.复制文件到部署路径
+        String deployDirPath = AppConstant.CODE_DEPLOY_ROOT_DIR + File.separator + deployKey;
+        try {
+            FileUtil.copyContent(new File(sourceDirPath), new File(deployDirPath), true);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "应用部署失败：" + e.getMessage());
+        }
+        // 8.更新该应用的deployKey,deployedTime,editTime
+        App updateApp = new App();
+        updateApp.setId(appId);
+        updateApp.setDeployKey(deployKey);
+        LocalDateTime now = LocalDateTime.now();
+        updateApp.setDeployedTime(now);
+        updateApp.setEditTime(now);
+        boolean updateResult = this.updateById(updateApp);
+        ThrowUtils.throwIf(!updateResult, ErrorCode.OPERATION_ERROR, "更新应用部署信息失败");
+        // 9.生成可访问的url地址
+        return StrUtil.format("{}/{}", AppConstant.CODE_DEPLOY_HOST, deployKey);
     }
 
     /**

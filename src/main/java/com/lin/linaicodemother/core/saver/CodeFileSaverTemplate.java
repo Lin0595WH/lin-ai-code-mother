@@ -1,9 +1,9 @@
 package com.lin.linaicodemother.core.saver;
 
 
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import com.lin.linaicodemother.constant.AppConstant;
 import com.lin.linaicodemother.exception.ErrorCode;
 import com.lin.linaicodemother.exception.ThrowUtils;
 import com.lin.linaicodemother.model.enums.CodeGenTypeEnum;
@@ -21,7 +21,7 @@ public abstract class CodeFileSaverTemplate<T> {
     /**
      * 文件保存的根目录
      */
-    private static final String FILE_SAVE_ROOT_DIR = System.getProperty("user.dir") + "/tmp/code_output";
+    private static final String FILE_SAVE_ROOT_DIR = AppConstant.CODE_OUTPUT_ROOT_DIR;
 
     /**
      * 模板方法：保存代码的标准流程
@@ -45,7 +45,7 @@ public abstract class CodeFileSaverTemplate<T> {
      * 验证输入参数（可由子类覆盖）
      *
      * @param result 代码结果对象
-     * @param appId   应用ID
+     * @param appId  应用ID
      */
     protected void validateInput(T result, Long appId) {
         ThrowUtils.throwIf(result == null, ErrorCode.SYSTEM_ERROR, "代码结果对象不能为空");
@@ -67,15 +67,14 @@ public abstract class CodeFileSaverTemplate<T> {
     }
 
     /**
-     * 构建文件的唯一路径：tmp/code_output/bizType_时间戳_应用ID
+     * 构建文件的唯一路径：tmp/code_output/bizType_应用ID
      *
      * @param appId 应用ID
      * @return 目录路径
      */
     protected String buildUniqueDir(Long appId) {
         String codeType = getCodeType().getValue();
-        String uniqueDirName = CharSequenceUtil.format("{}_{}_{}",
-                codeType, DateUtil.format(DateUtil.date(), "yyyyMMddHHmmss"), appId);
+        String uniqueDirName = CharSequenceUtil.format("{}_{}", codeType, appId);
         String dirPath = FILE_SAVE_ROOT_DIR + File.separator + uniqueDirName;
         FileUtil.mkdir(dirPath);
         return dirPath;
