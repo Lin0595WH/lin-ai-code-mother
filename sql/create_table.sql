@@ -46,3 +46,20 @@ CREATE TABLE IF NOT EXISTS app
     INDEX idx_app_name (app_name),         -- 提升基于应用名称的查询性能
     INDEX idx_user_id (user_id)            -- 提升基于用户 ID 的查询性能
 ) COMMENT '应用' COLLATE = utf8mb4_unicode_ci;
+
+
+-- 对话历史表
+CREATE TABLE IF NOT EXISTS chat_history
+(
+    id           bigint AUTO_INCREMENT COMMENT 'id' PRIMARY KEY,
+    message      text                               NOT NULL COMMENT '消息',
+    message_type varchar(32)                        NOT NULL COMMENT 'user/ai',
+    app_id       bigint                             NOT NULL COMMENT '应用id',
+    user_id      bigint                             NOT NULL COMMENT '创建用户id',
+    create_time  datetime DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
+    update_time  datetime DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    is_delete    tinyint  DEFAULT 0                 NOT NULL COMMENT '是否删除',
+    INDEX idx_app_id (app_id),
+    INDEX idx_create_time (create_time),
+    INDEX idx_app_id_create_time (app_id, create_time)
+) COMMENT '对话历史' COLLATE = utf8mb4_unicode_ci;
