@@ -75,6 +75,9 @@ public class MyBatisCodeGenerator {
         // 设置生成 Controller
         globalConfig.enableController();
 
+        // 设置生成 TableDef
+        globalConfig.enableTableDef();
+
         // 设置生成注释，比如生成的时间和作者，避免后续多余的代码改动
         globalConfig.getJavadocConfig()
                 .setAuthor("Lin")
