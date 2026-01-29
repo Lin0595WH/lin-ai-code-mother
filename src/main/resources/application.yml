@@ -1,4 +1,9 @@
 spring:
+  # session 配置
+  session:
+      store-type: redis
+      # 过期时间 30天
+      timeout: 2592000
   profiles:
     active: local
   application:
@@ -24,6 +29,10 @@ server:
   port: 8123
   servlet:
     context-path: /api
+    # cookie过期时间 30天
+    session:
+      cookie:
+        max-age: 2592000
 # springdoc-openapi ????
 springdoc:
   group-configs:
