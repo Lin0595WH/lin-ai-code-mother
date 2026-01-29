@@ -165,6 +165,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
      */
     @Override
     public List<String> checkSensitive(String content) {
+        // TODO: 有空改造下，现在这个太敏感了
         if (CharSequenceUtil.isBlank(content)) {
             return List.of();
         }
