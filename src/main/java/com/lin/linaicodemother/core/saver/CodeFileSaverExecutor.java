@@ -3,6 +3,8 @@ package com.lin.linaicodemother.core.saver;
 
 import com.lin.linaicodemother.ai.model.HtmlCodeResult;
 import com.lin.linaicodemother.ai.model.MultiFileCodeResult;
+import com.lin.linaicodemother.exception.BusinessException;
+import com.lin.linaicodemother.exception.ErrorCode;
 import com.lin.linaicodemother.model.enums.CodeGenTypeEnum;
 
 import java.io.File;
@@ -31,6 +33,7 @@ public class CodeFileSaverExecutor {
         return switch (codeGenType) {
             case HTML -> htmlCodeFileSaver.saveCode((HtmlCodeResult) codeResult, appId);
             case MULTI_FILE -> multiFileCodeFileSaver.saveCode((MultiFileCodeResult) codeResult, appId);
+            default -> throw new BusinessException(ErrorCode.SYSTEM_ERROR, "执行代码保存失败，不支持的代码生成类型: " + codeGenType);
         };
     }
 }

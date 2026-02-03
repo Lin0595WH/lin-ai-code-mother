@@ -101,13 +101,13 @@
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j</artifactId>
-            <version>1.1.0</version>
+            <version>1.10.0</version>
         </dependency>
         <!-- langchain4j 和 Open AI大模型 -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
-            <version>1.1.0-beta7</version>
+            <version>1.10.0-beta18</version>
         </dependency>
         <!-- langchain4j-Reactor 响应式编程 返回flex对象-->
         <dependency>

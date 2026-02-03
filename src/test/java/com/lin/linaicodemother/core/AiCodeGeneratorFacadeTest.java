@@ -47,4 +47,18 @@ class AiCodeGeneratorFacadeTest {
         // 订阅一个异步数据流，并指定数据的消费逻辑 —— 简单说就是 “等数据流产生结果后，把结果打印到控制台”
         result.subscribe(System.out::println);
     }
+
+    @Test
+    void generateVueProjectCodeStream() {
+        Flux<String> codeStream = aiCodeGeneratorFacade.generateAndSaveCodeStream(
+                "简单的任务记录网站,至少两个页面，一个是任务看板，总代码量不超过 200 行",
+                CodeGenTypeEnum.VUE_PROJECT, 2L);
+        // 阻塞等待所有数据收集完成
+        List<String> result = codeStream.collectList().block();
+        // 验证结果
+        Assertions.assertNotNull(result);
+        String completeContent = String.join("", result);
+        Assertions.assertNotNull(completeContent);
+    }
+
 }

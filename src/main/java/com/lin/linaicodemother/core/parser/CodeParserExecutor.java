@@ -1,6 +1,8 @@
 package com.lin.linaicodemother.core.parser;
 
 
+import com.lin.linaicodemother.exception.BusinessException;
+import com.lin.linaicodemother.exception.ErrorCode;
 import com.lin.linaicodemother.model.enums.CodeGenTypeEnum;
 
 /**
@@ -27,6 +29,7 @@ public class CodeParserExecutor {
         return switch (codeGenTypeEnum) {
             case HTML -> htmlCodeParser.parseCode(codeContent);
             case MULTI_FILE -> multiFileCodeParser.parseCode(codeContent);
+            default -> throw new BusinessException(ErrorCode.SYSTEM_ERROR, "执行代码解析失败，不支持的代码生成类型: " + codeGenTypeEnum);
         };
     }
 }

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
+import java.util.Objects;
 
 /**
  * @Author Lin
@@ -52,6 +53,10 @@ public class AiCodeGeneratorFacade {
                 MultiFileCodeResult result = aiCodeGeneratorService.generateMultiFileCode(userMessage);
                 yield CodeFileSaverExecutor.executeSaver(result, CodeGenTypeEnum.MULTI_FILE, appId);
             }
+            default -> {
+                String errorMessage = "不支持的生成类型：" + codeGenTypeEnum.getValue();
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, errorMessage);
+            }
         };
     }
 
@@ -68,7 +73,7 @@ public class AiCodeGeneratorFacade {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "生成类型不能为空");
         }
         // 根据 appId 获取相应的 AI 服务实例
-        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, codeGenTypeEnum);
         return switch (codeGenTypeEnum) {
             case HTML -> {
                 Flux<String> codeStream = aiCodeGeneratorService.generateHtmlCodeStream(userMessage);
@@ -77,6 +82,10 @@ public class AiCodeGeneratorFacade {
             case MULTI_FILE -> {
                 Flux<String> codeStream = aiCodeGeneratorService.generateMultiFileCodeStream(userMessage);
                 yield processCodeStream(codeStream, CodeGenTypeEnum.MULTI_FILE, appId);
+            }
+            case VUE_PROJECT -> {
+                Flux<String> stringFlux = aiCodeGeneratorService.generateVueProjectCodeStream(appId, userMessage);
+                yield processCodeStream(stringFlux, CodeGenTypeEnum.VUE_PROJECT, appId);
             }
         };
     }
@@ -96,12 +105,16 @@ public class AiCodeGeneratorFacade {
         return codeStream.doOnNext(codeBuilder::append).doOnComplete(() -> {
             // 流式返回完成后，保存代码
             try {
-                String completeCode = codeBuilder.toString();
-                // 使用执行器解析代码
-                Object parsedResult = CodeParserExecutor.executeParser(completeCode, codeGenType);
-                // 使用执行器保存代码
-                File saveDir = CodeFileSaverExecutor.executeSaver(parsedResult, codeGenType, appId);
-                log.info("保存成功，目录为：{}", saveDir.getAbsolutePath());
+                if (Objects.requireNonNull(codeGenType) == CodeGenTypeEnum.VUE_PROJECT) {
+                    log.info("Vue 工程模式下，文件已由Agent调用工具保存,不再执行CodeParserExecutor、CodeFileSaverExecutor");
+                } else {
+                    String completeCode = codeBuilder.toString();
+                    // 使用执行器解析代码
+                    Object parsedResult = CodeParserExecutor.executeParser(completeCode, codeGenType);
+                    // 使用执行器保存代码
+                    File saveDir = CodeFileSaverExecutor.executeSaver(parsedResult, codeGenType, appId);
+                    log.info("保存成功，目录为：{}", saveDir.getAbsolutePath());
+                }
             } catch (Exception e) {
                 log.error("保存失败: {}", e.getMessage());
             }
