@@ -109,7 +109,8 @@ public class AiCodeGeneratorFacade {
      * @return Flux<String> 流式响应
      */
     private Flux<String> processTokenStream(TokenStream tokenStream) {
-        return Flux.create(sink -> tokenStream.onPartialResponse((String partialResponse) -> {
+        return Flux.create(sink -> tokenStream
+                .onPartialResponse((String partialResponse) -> {
                     AiResponseMessage aiResponseMessage = new AiResponseMessage(partialResponse);
                     sink.next(JSONUtil.toJsonStr(aiResponseMessage));
                 })
@@ -121,7 +122,7 @@ public class AiCodeGeneratorFacade {
                     ToolExecutedMessage toolExecutedMessage = new ToolExecutedMessage(toolExecution);
                     sink.next(JSONUtil.toJsonStr(toolExecutedMessage));
                 })
-                .onCompleteResponse((ChatResponse response) -> sink.complete())
+                .onCompleteResponse((ChatResponse response) ->sink.complete())
                 .onError((Throwable error) -> {
                     log.error("处理VUE_PROJECT模式下的tokenStream 出现异常：{}", error.getMessage());
                     sink.error(error);

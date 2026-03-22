@@ -4,7 +4,7 @@ package com.lin.linaicodemother.core.handler;
 import com.lin.linaicodemother.model.entity.User;
 import com.lin.linaicodemother.model.enums.CodeGenTypeEnum;
 import com.lin.linaicodemother.service.ChatHistoryService;
-import jakarta.annotation.Resource;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
@@ -17,9 +17,10 @@ import reactor.core.publisher.Flux;
  * 2. TokenStream 格式的复杂流（VUE_PROJECT） -> JsonMessageStreamHandler
  */
 @Component
+@RequiredArgsConstructor
 public class StreamHandlerExecutor {
-    @Resource
-    private JsonMessageStreamHandler jsonMessageStreamHandler;
+
+    private final JsonMessageStreamHandler jsonMessageStreamHandler;
 
     /**
      * 创建流处理器并处理聊天历史记录

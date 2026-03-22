@@ -8,9 +8,12 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.lin.linaicodemother.ai.model.message.*;
+import com.lin.linaicodemother.constant.AppConstant;
+import com.lin.linaicodemother.core.builder.VueProjectBuilder;
 import com.lin.linaicodemother.model.entity.User;
 import com.lin.linaicodemother.model.enums.ChatHistoryMessageTypeEnum;
 import com.lin.linaicodemother.service.ChatHistoryService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -25,7 +28,10 @@ import java.util.Set;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class JsonMessageStreamHandler {
+
+    private final VueProjectBuilder vueProjectBuilder;
 
     /**
      * 处理 TokenStream（VUE_PROJECT）
@@ -45,7 +51,7 @@ public class JsonMessageStreamHandler {
         Set<String> seenToolIds = new HashSet<>();
         return originFlux
                 // 解析每个 JSON 消息块
-                .map(chunk -> handleJsonMessageChunk(chunk, chatHistoryStringBuilder, seenToolIds))
+                .map(chunk -> handleJsonMessageChunk(chunk, chatHistoryStringBuilder,seenToolIds))
                 // 过滤空字串
                 .filter(StrUtil::isNotEmpty)
                 // // 流式响应完成后，添加 AI 消息到对话历史
@@ -53,6 +59,9 @@ public class JsonMessageStreamHandler {
                     String aiResponse = chatHistoryStringBuilder.toString();
                     chatHistoryService.addChatMessage(appId, aiResponse, ChatHistoryMessageTypeEnum.AI.getValue(),
                             loginUser.getId());
+                    // 异步构造 Vue 项目
+                    String projectPath = AppConstant.CODE_OUTPUT_ROOT_DIR + "/vue_project_" + appId;
+                    vueProjectBuilder.buildProjectAsync(projectPath);
                 })
                 // 如果AI回复失败，也要记录错误消息
                 .doOnError(error -> {
@@ -116,10 +125,10 @@ public class JsonMessageStreamHandler {
                         {}
                         ```
                         """;
-                String result = CharSequenceUtil.format (resultTemplate, relativeFilePath, suffix, content);
+                String result = CharSequenceUtil.format(resultTemplate, relativeFilePath, suffix, content);
                 // 输出前端和要持久化的内容
-                String output =CharSequenceUtil.format ("{}{}{}",
-                        StrPool.LF.repeat (2), result, StrPool.LF.repeat (2));
+                String output = CharSequenceUtil.format("{}{}{}",
+                        StrPool.LF.repeat(2), result, StrPool.LF.repeat(2));
                 // 写入对话历史
                 chatHistoryStringBuilder.append(output);
                 return output;
