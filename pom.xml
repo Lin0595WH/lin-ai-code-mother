@@ -141,6 +141,27 @@
             <groupId>org.springframework.session</groupId>
             <artifactId>spring-session-data-redis</artifactId>
         </dependency>
+        <!-- Selenium 网页截图依赖 -->
+        <!-- https://www.selenium.dev/zh-cn/documentation/ -->
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>4.33.0</version>
+        </dependency>
+        <!-- WebDriverManager 浏览器驱动管理 -->
+        <!-- https://github.com/bonigarcia/webdrivermanager -->
+        <dependency>
+            <groupId>io.github.bonigarcia</groupId>
+            <artifactId>webdrivermanager</artifactId>
+            <version>6.1.0</version>
+        </dependency>
+        <!-- 腾讯云COS -->
+        <!-- https://cloud.tencent.com/document/product/436/10199 -->
+        <dependency>
+            <groupId>com.qcloud</groupId>
+            <artifactId>cos_api</artifactId>
+            <version>5.6.227</version>
+        </dependency>
 
     </dependencies>
 

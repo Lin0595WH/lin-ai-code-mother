@@ -62,6 +62,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
     private final VueProjectBuilder vueProjectBuilder;
 
+    private final ScreenshotServiceImpl screenshotService;
+
     /**
      * 通过对话生成应用代码
      *
@@ -159,7 +161,34 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         boolean updateResult = this.updateById(updateApp);
         ThrowUtils.throwIf(!updateResult, ErrorCode.OPERATION_ERROR, "更新应用部署信息失败");
         // 10.生成可访问的url地址
-        return CharSequenceUtil.format("{}/{}/", AppConstant.CODE_DEPLOY_HOST, deployKey);
+        String appDeployUrl = CharSequenceUtil.format("{}/{}/", AppConstant.CODE_DEPLOY_HOST, deployKey);
+        // 11.异步生成应用截图（上传到腾讯云COS,并更新数据库封面字段)
+        generateAppScreenshotAsync(appId, appDeployUrl);
+        return appDeployUrl;
+    }
+
+    /**
+     * 异步生成应用截图并更新封面
+     *
+     * @param appId  应用ID
+     * @param appUrl 应用访问URL
+     */
+    public void generateAppScreenshotAsync(Long appId, String appUrl) {
+        Thread.startVirtualThread(() -> {
+            // 1.生成应用截图，并上传到腾讯云COS,得到一个可访问的截图URL
+            String screenshotUrl = screenshotService.generateAndUploadScreenshot(appUrl);
+            if (CharSequenceUtil.isNotBlank(screenshotUrl)) {
+                App updateApp = new App();
+                updateApp.setId(appId);
+                updateApp.setCover(screenshotUrl);
+                boolean updateResult = this.updateById(updateApp);
+                if (!updateResult) {
+                    log.error("更新应用封面失败：{}", appId);
+                }
+            } else {
+                log.error("应用截图生成失败：{}", appId);
+            }
+        });
     }
 
     /**
