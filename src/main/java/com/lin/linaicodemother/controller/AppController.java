@@ -2,6 +2,7 @@ package com.lin.linaicodemother.controller;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.lin.linaicodemother.annotation.AuthCheck;
@@ -19,10 +20,12 @@ import com.lin.linaicodemother.model.entity.User;
 import com.lin.linaicodemother.model.enums.CodeGenTypeEnum;
 import com.lin.linaicodemother.model.vo.AppVO;
 import com.lin.linaicodemother.service.AppService;
+import com.lin.linaicodemother.service.ProjectDownloadService;
 import com.lin.linaicodemother.service.UserService;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
@@ -30,7 +33,9 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.File;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +52,8 @@ public class AppController {
     private final AppService appService;
 
     private final UserService userService;
+
+    private final ProjectDownloadService projectDownloadService;
 
     /**
      * 应用聊天生成代码（流式 SSE）
@@ -346,4 +353,38 @@ public class AppController {
         return ResultUtils.success(appService.getAppVO(app));
     }
 
+    /**
+     * 下载应用代码
+     *
+     * @param appId    应用ID
+     * @param request  请求
+     * @param response 响应
+     */
+    @GetMapping("/download/{appId}")
+    public void downloadAppCode(@PathVariable Long appId,
+                                HttpServletRequest request,
+                                HttpServletResponse response) {
+        // 1. 基础校验
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID无效");
+        // 2. 查询应用信息
+        App app = appService.getById(appId);
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        // 3. 权限校验：只有应用创建者可以下载代码
+        User loginUser = userService.getLoginUser(request);
+        if (!app.getUserId().equals(loginUser.getId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限下载该应用代码");
+        }
+        // 4. 构建应用代码目录路径（生成目录，非部署目录）
+        String codeGenType = app.getCodeGenType();
+        String sourceDirName = codeGenType + "_" + appId;
+        String sourceDirPath = AppConstant.CODE_OUTPUT_ROOT_DIR + File.separator + sourceDirName;
+        // 5. 检查代码目录是否存在
+        File sourceDir = new File(sourceDirPath);
+        ThrowUtils.throwIf(!sourceDir.exists() || !sourceDir.isDirectory(),
+                ErrorCode.NOT_FOUND_ERROR, "应用代码不存在，请先生成代码");
+        // 6. 生成下载文件名（不建议添加中文内容）
+        String downloadFileName = appId + "_" + DateUtil.now().formatted(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        // 7. 调用通用下载服务
+        projectDownloadService.downloadProjectAsZip(sourceDirPath, downloadFileName, response);
+    }
 }

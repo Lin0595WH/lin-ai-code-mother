@@ -27,6 +27,7 @@ import java.util.Objects;
  * @Date 2026/3/24 21:13
  * @Descriptions 截图工具类
  */
+// TODO:可以优化这个类，当前webDriver 在并发场景下可能出现问题
 @Slf4j
 public class WebScreenshotUtils {
 
