@@ -9,8 +9,8 @@ import lombok.Data;
  * @Date 2026/1/7 21:14
  * @Descriptions HTML 代码结果
  */
-@Description("生成 HTML 代码文件的结果")
 @Data
+@Description("生成 HTML 代码文件的结果")
 public class HtmlCodeResult {
 
     /**

@@ -9,8 +9,8 @@ import lombok.Data;
  * @Date 2026/1/7 21:16
  * @Descriptions 多文件代码结果
  */
-@Description("生成多个代码文件的结果")
 @Data
+@Description("生成多个代码文件的结果")
 public class MultiFileCodeResult {
 
     /**
