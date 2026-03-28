@@ -18,5 +18,5 @@ public interface AiCodeGenTypeRoutingService {
      * @return 描述
      */
     @SystemMessage(fromResource = "prompt/codegen-routing-system-prompt.txt")
-    RoutingResult route(String userPrompt);
+    RoutingResult routing(String userPrompt);
 }

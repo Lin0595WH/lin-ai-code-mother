@@ -1,5 +1,6 @@
 package com.lin.linaicodemother.service;
 
+import com.lin.linaicodemother.model.dto.app.AppAddRequest;
 import com.lin.linaicodemother.model.dto.app.AppQueryRequest;
 import com.lin.linaicodemother.model.entity.App;
 import com.lin.linaicodemother.model.entity.User;
@@ -35,6 +36,15 @@ public interface AppService extends IService<App> {
      * @return 可访问的部署url地址
      */
     String deployApp(Long appId, User loginUser);
+
+    /**
+     * 创建应用
+     *
+     * @param appAddRequest 应用生成请求
+     * @param loginUser 登录用户
+     * @return
+     */
+    Long createApp(AppAddRequest appAddRequest, User loginUser);
 
     /**
      * 异步生成应用截图并更新封面

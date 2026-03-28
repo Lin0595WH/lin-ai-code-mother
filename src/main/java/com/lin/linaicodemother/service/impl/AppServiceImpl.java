@@ -1,10 +1,13 @@
 package com.lin.linaicodemother.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.github.houbb.sensitive.word.core.SensitiveWordHelper;
+import com.lin.linaicodemother.ai.AiCodeGenTypeRoutingService;
+import com.lin.linaicodemother.ai.model.RoutingResult;
 import com.lin.linaicodemother.constant.AppConstant;
 import com.lin.linaicodemother.core.AiCodeGeneratorFacade;
 import com.lin.linaicodemother.core.builder.VueProjectBuilder;
@@ -14,6 +17,7 @@ import com.lin.linaicodemother.exception.ErrorCode;
 import com.lin.linaicodemother.exception.ThrowUtils;
 import com.lin.linaicodemother.mapper.AppMapper;
 import com.lin.linaicodemother.mapstruct.AppModuleMapper;
+import com.lin.linaicodemother.model.dto.app.AppAddRequest;
 import com.lin.linaicodemother.model.dto.app.AppQueryRequest;
 import com.lin.linaicodemother.model.entity.App;
 import com.lin.linaicodemother.model.entity.User;
@@ -63,6 +67,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     private final VueProjectBuilder vueProjectBuilder;
 
     private final ScreenshotServiceImpl screenshotService;
+
+    private final AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService;
 
     /**
      * 通过对话生成应用代码
@@ -165,6 +171,41 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         // 11.异步生成应用截图（上传到腾讯云COS,并更新数据库封面字段)
         generateAppScreenshotAsync(appId, appDeployUrl);
         return appDeployUrl;
+    }
+
+    /**
+     * 创建应用
+     *
+     * @param appAddRequest 应用生成请求
+     * @param loginUser     登录用户
+     * @return
+     */
+    @Override
+    public Long createApp(AppAddRequest appAddRequest, User loginUser) {
+        // 参数校验
+        String initPrompt = appAddRequest.getInitPrompt();
+        ThrowUtils.throwIf(CharSequenceUtil.isBlank(initPrompt), ErrorCode.PARAMS_ERROR, "初始化 prompt 不能为空");
+        // 构造入库对象
+        App app = new App();
+        BeanUtil.copyProperties(appAddRequest, app);
+        app.setUserId(loginUser.getId());
+        // 使用 AI 智能选择代码生成类型 以及应用名称
+        RoutingResult routingResult = aiCodeGenTypeRoutingService.routing(initPrompt);
+        CodeGenTypeEnum selectedCodeGenType = routingResult.getCodeGenTypeEnum();
+        // 生成类型
+        String codeGenType = CharSequenceUtil.isBlank(selectedCodeGenType.getValue())
+                ? CodeGenTypeEnum.HTML.getValue() : selectedCodeGenType.getValue();
+        app.setCodeGenType(codeGenType);
+        // 应用名称
+        String appName =CharSequenceUtil.isBlank( routingResult.getAppName())
+                ? initPrompt.substring(0, Math.min(initPrompt.length(), 12))
+                : routingResult.getAppName();
+        app.setAppName(appName);
+        // 插入数据库
+        boolean result = this.save(app);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        log.info("应用创建成功，ID: {}, 类型: {}", app.getId(), selectedCodeGenType.getValue());
+        return app.getId();
     }
 
     /**
