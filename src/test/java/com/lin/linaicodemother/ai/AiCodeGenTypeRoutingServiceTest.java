@@ -29,5 +29,11 @@ class AiCodeGenTypeRoutingServiceTest {
 
     }
 
+    @Test
+    void routeCodeGenType2() {
+        String userPrompt = "制作一个精美的作品展示网站，适合设计师、摄影师、艺术家等创作者。包含作品画廊、项目详情页、个人简历、联系方式等模块。采用瀑布流或网格布局展示作品，支持图片放大预览和作品分类筛选。";
+        RoutingResult result = aiCodeGenTypeRoutingService.routing(userPrompt);
+        log.info("用户需求: {} ——》 决定生成类型：{}；应用名称：{}", userPrompt, result.getCodeGenTypeEnum().getValue(), result.getAppName());
+    }
 
 }

@@ -2,7 +2,7 @@ package com.lin.linaicodemother.ai;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.service.AiServices;
-import jakarta.annotation.Resource;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,10 +14,10 @@ import org.springframework.context.annotation.Configuration;
  */
 @Slf4j
 @Configuration
+@RequiredArgsConstructor
 public class AiCodeGenTypeRoutingServiceFactory {
 
-    @Resource
-    private ChatModel aiCodeGenTypeRoutingChatModel;
+    private final ChatModel chatModel;
 
     /**
      * 创建AI代码生成类型路由服务实例
@@ -25,7 +25,7 @@ public class AiCodeGenTypeRoutingServiceFactory {
     @Bean
     public AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService() {
         return AiServices.builder(AiCodeGenTypeRoutingService.class)
-                .chatModel(aiCodeGenTypeRoutingChatModel)
+                .chatModel(chatModel)
                 .build();
     }
 }

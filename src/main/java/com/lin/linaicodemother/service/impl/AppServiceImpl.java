@@ -185,6 +185,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         // 参数校验
         String initPrompt = appAddRequest.getInitPrompt();
         ThrowUtils.throwIf(CharSequenceUtil.isBlank(initPrompt), ErrorCode.PARAMS_ERROR, "初始化 prompt 不能为空");
+        List<String> strings = checkSensitive(initPrompt);
+        ThrowUtils.throwIf(!strings.isEmpty(), ErrorCode.PARAMS_ERROR, "用户输入中包含敏感词：" + strings);
         // 构造入库对象
         App app = new App();
         BeanUtil.copyProperties(appAddRequest, app);
