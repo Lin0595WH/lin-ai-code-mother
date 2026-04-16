@@ -1,13 +1,14 @@
 package com.lin.linaicodemother.core.handler;
 
 
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.lin.linaicodemother.ai.model.message.*;
+import com.lin.linaicodemother.ai.tools.BaseTool;
+import com.lin.linaicodemother.ai.tools.ToolManager;
 import com.lin.linaicodemother.constant.AppConstant;
 import com.lin.linaicodemother.core.builder.VueProjectBuilder;
 import com.lin.linaicodemother.model.entity.User;
@@ -33,6 +34,8 @@ public class JsonMessageStreamHandler {
 
     private final VueProjectBuilder vueProjectBuilder;
 
+    private final ToolManager toolManager;
+
     /**
      * 处理 TokenStream（VUE_PROJECT）
      * 解析 JSON 消息并重组为完整的响应格式
@@ -51,7 +54,7 @@ public class JsonMessageStreamHandler {
         Set<String> seenToolIds = new HashSet<>();
         return originFlux
                 // 解析每个 JSON 消息块
-                .map(chunk -> handleJsonMessageChunk(chunk, chatHistoryStringBuilder,seenToolIds))
+                .map(chunk -> handleJsonMessageChunk(chunk, chatHistoryStringBuilder, seenToolIds))
                 // 过滤空字串
                 .filter(StrUtil::isNotEmpty)
                 // // 流式响应完成后，添加 AI 消息到对话历史
@@ -100,14 +103,16 @@ public class JsonMessageStreamHandler {
             case TOOL_REQUEST -> {
                 ToolRequestMessage toolRequestMessage = JSONUtil.toBean(chunk, ToolRequestMessage.class);
                 String toolId = toolRequestMessage.getId();
+                String toolName = toolRequestMessage.getName();
                 // 检查是否是第一次看到这个工具 ID
                 if (toolId != null && !seenToolIds.contains(toolId)) {
                     // 第一次调用这个工具，记录 ID 并完整返回工具信息
                     seenToolIds.add(toolId);
                     // 写入对话历史
-                    String text = "[选择工具] 写入文件";
-                    chatHistoryStringBuilder.append(text);
-                    return StrPool.LF.repeat(2) + text + StrPool.LF.repeat(2);
+                    BaseTool tool = toolManager.getTool(toolName);
+                    String toolRequestResponse = tool.generateToolRequestResponse();
+                    chatHistoryStringBuilder.append(toolRequestResponse);
+                    return StrPool.LF.repeat(2) + toolRequestResponse + StrPool.LF.repeat(2);
                 } else {
                     // 不是第一次调用这个工具，直接返回空
                     return "";
@@ -116,16 +121,9 @@ public class JsonMessageStreamHandler {
             case TOOL_EXECUTED -> {
                 ToolExecutedMessage toolExecutedMessage = JSONUtil.toBean(chunk, ToolExecutedMessage.class);
                 JSONObject jsonObject = JSONUtil.parseObj(toolExecutedMessage.getArguments());
-                String relativeFilePath = jsonObject.getStr("relativeFilePath");
-                String suffix = FileUtil.getSuffix(relativeFilePath);
-                String content = jsonObject.getStr("content");
-                String resultTemplate = """
-                        [工具调用] 写入文件 {}
-                        ```{}
-                        {}
-                        ```
-                        """;
-                String result = CharSequenceUtil.format(resultTemplate, relativeFilePath, suffix, content);
+                String toolExecutedMessageName = toolExecutedMessage.getName();
+                BaseTool tool = toolManager.getTool(toolExecutedMessageName);
+                String result = tool.generateToolExecutedResult(jsonObject);
                 // 输出前端和要持久化的内容
                 String output = CharSequenceUtil.format("{}{}{}",
                         StrPool.LF.repeat(2), result, StrPool.LF.repeat(2));

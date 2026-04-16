@@ -3,7 +3,7 @@ package com.lin.linaicodemother.ai;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.lin.linaicodemother.ai.tools.FileWriteTool;
+import com.lin.linaicodemother.ai.tools.*;
 import com.lin.linaicodemother.model.enums.CodeGenTypeEnum;
 import com.lin.linaicodemother.service.ChatHistoryService;
 import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
@@ -38,6 +38,8 @@ public class AiCodeGeneratorServiceFactory {
     private final ChatHistoryService chatHistoryService;
 
     private final StreamingChatModel reasoningStreamingChatModel;
+
+    private final ToolManager toolManager;
 
     /**
      * AI 服务实例缓存
@@ -107,7 +109,7 @@ public class AiCodeGeneratorServiceFactory {
             case VUE_PROJECT -> AiServices.builder(AiCodeGeneratorService.class)
                     .streamingChatModel(reasoningStreamingChatModel)
                     .chatMemoryProvider(memoryId -> chatMemory)
-                    .tools(new FileWriteTool())
+                    .tools(toolManager.getAllTools())
                     .hallucinatedToolNameStrategy(toolExecutionRequest -> ToolExecutionResultMessage.from(
                             toolExecutionRequest, "Error: there is no tool called " + toolExecutionRequest.name()
                     ))
