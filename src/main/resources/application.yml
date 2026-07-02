@@ -24,7 +24,8 @@ spring:
       port: 6379
       username: root
       password:
-      ttl: 3600
+      ttl: 3600 #缓存过期时间（秒）
+      database: 1
 server:
   port: 8123
   servlet:

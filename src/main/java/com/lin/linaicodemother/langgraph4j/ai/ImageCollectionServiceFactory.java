@@ -7,7 +7,7 @@ import com.lin.linaicodemother.langgraph4j.tools.MermaidDiagramTool;
 import com.lin.linaicodemother.langgraph4j.tools.UndrawIllustrationTool;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.service.AiServices;
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,18 +17,18 @@ import org.springframework.context.annotation.Configuration;
  */
 @Slf4j
 @Configuration
-@RequiredArgsConstructor
 public class ImageCollectionServiceFactory {
 
-    private final ChatModel chatModel;
-
-    private final ImageSearchTool imageSearchTool;
-
-    private final UndrawIllustrationTool undrawIllustrationTool;
-
-    private final MermaidDiagramTool mermaidDiagramTool;
-
-    private final LogoGeneratorTool logoGeneratorTool;
+    @Resource(name = "openAiChatModel")
+    private ChatModel chatModel;
+    @Resource
+    private ImageSearchTool imageSearchTool;
+    @Resource
+    private UndrawIllustrationTool undrawIllustrationTool;
+    @Resource
+    private MermaidDiagramTool mermaidDiagramTool;
+    @Resource
+    private LogoGeneratorTool logoGeneratorTool;
 
     /**
      * 创建图片收集 AI 服务

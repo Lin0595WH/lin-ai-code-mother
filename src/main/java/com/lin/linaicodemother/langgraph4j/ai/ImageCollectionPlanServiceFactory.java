@@ -2,7 +2,7 @@ package com.lin.linaicodemother.langgraph4j.ai;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.service.AiServices;
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -10,10 +10,10 @@ import org.springframework.context.annotation.Configuration;
  * 图片收集规划服务工厂
  */
 @Configuration
-@RequiredArgsConstructor
 public class ImageCollectionPlanServiceFactory {
 
-    private final ChatModel chatModel;
+    @Resource(name = "openAiChatModel")
+    private ChatModel chatModel;
 
     @Bean
     public ImageCollectionPlanService createImageCollectionPlanService() {

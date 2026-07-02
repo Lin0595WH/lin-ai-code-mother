@@ -5,8 +5,10 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
 import com.github.houbb.sensitive.word.core.SensitiveWordHelper;
 import com.lin.linaicodemother.ai.AiCodeGenTypeRoutingService;
+import com.lin.linaicodemother.ai.AiCodeGenTypeRoutingServiceFactory;
 import com.lin.linaicodemother.ai.model.RoutingResult;
 import com.lin.linaicodemother.constant.AppConstant;
 import com.lin.linaicodemother.core.AiCodeGeneratorFacade;
@@ -68,7 +70,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
     private final ScreenshotServiceImpl screenshotService;
 
-    private final AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService;
+    private final AiCodeGenTypeRoutingServiceFactory aiCodeGenTypeRoutingServiceFactory;
 
     /**
      * 通过对话生成应用代码
@@ -191,7 +193,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         App app = new App();
         BeanUtil.copyProperties(appAddRequest, app);
         app.setUserId(loginUser.getId());
-        // 使用 AI 智能选择代码生成类型 以及应用名称
+        // 使用 AI 智能选择代码生成类型（多例模式） 以及应用名称
+        AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService = aiCodeGenTypeRoutingServiceFactory.createAiCodeGenTypeRoutingService();
         RoutingResult routingResult = aiCodeGenTypeRoutingService.routing(initPrompt);
         CodeGenTypeEnum selectedCodeGenType = routingResult.getCodeGenTypeEnum();
         // 生成类型
@@ -199,7 +202,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
                 ? CodeGenTypeEnum.HTML.getValue() : selectedCodeGenType.getValue();
         app.setCodeGenType(codeGenType);
         // 应用名称
-        String appName =CharSequenceUtil.isBlank( routingResult.getAppName())
+        String appName = CharSequenceUtil.isBlank(routingResult.getAppName())
                 ? initPrompt.substring(0, Math.min(initPrompt.length(), 12))
                 : routingResult.getAppName();
         app.setAppName(appName);
@@ -218,6 +221,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
      */
     public void generateAppScreenshotAsync(Long appId, String appUrl) {
         Thread.startVirtualThread(() -> {
+            log.info("开始生成应用截图，应用ID: {}", appId);
             // 1.生成应用截图，并上传到腾讯云COS,得到一个可访问的截图URL
             String screenshotUrl = screenshotService.generateAndUploadScreenshot(appUrl);
             if (CharSequenceUtil.isNotBlank(screenshotUrl)) {
@@ -323,14 +327,14 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         String sortField = appQueryRequest.getSortField();
         String sortOrder = appQueryRequest.getSortOrder();
         return QueryWrapper.create()
-                .eq("id", id)
-                .like("app_name", appName)
-                .like("cover", cover)
-                .like("init_prompt", initPrompt)
-                .eq("code_gen_type", codeGenType)
-                .eq("deploy_key", deployKey)
-                .eq("priority", priority)
-                .eq("user_id", userId)
+                .eq("id", id, id != null)
+                .like("app_name", appName, StrUtil::isNotBlank)
+                .like("cover", cover, StrUtil::isNotBlank)
+                .like("init_prompt", initPrompt, StrUtil::isNotBlank)
+                .eq("code_gen_type", codeGenType, StrUtil::isNotBlank)
+                .eq("deploy_key", deployKey, StrUtil::isNotBlank)
+                .eq("priority", priority, priority != null)
+                .eq("user_id", userId, userId != null)
                 .orderBy(sortField, "ascend".equals(sortOrder));
     }
 

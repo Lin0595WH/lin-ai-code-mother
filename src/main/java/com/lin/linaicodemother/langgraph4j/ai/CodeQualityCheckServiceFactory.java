@@ -2,7 +2,7 @@ package com.lin.linaicodemother.langgraph4j.ai;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.service.AiServices;
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,10 +12,10 @@ import org.springframework.context.annotation.Configuration;
  */
 @Slf4j
 @Configuration
-@RequiredArgsConstructor
 public class CodeQualityCheckServiceFactory {
 
-    private final ChatModel chatModel;
+    @Resource(name = "openAiChatModel")
+    private ChatModel chatModel;
 
     /**
      * 创建代码质量检查 AI 服务
