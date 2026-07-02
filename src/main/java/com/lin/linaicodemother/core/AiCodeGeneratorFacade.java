@@ -9,6 +9,8 @@ import com.lin.linaicodemother.ai.model.MultiFileCodeResult;
 import com.lin.linaicodemother.ai.model.message.AiResponseMessage;
 import com.lin.linaicodemother.ai.model.message.ToolExecutedMessage;
 import com.lin.linaicodemother.ai.model.message.ToolRequestMessage;
+import com.lin.linaicodemother.constant.AppConstant;
+import com.lin.linaicodemother.core.builder.VueProjectBuilder;
 import com.lin.linaicodemother.core.parser.CodeParserExecutor;
 import com.lin.linaicodemother.core.saver.CodeFileSaverExecutor;
 import com.lin.linaicodemother.exception.BusinessException;
@@ -37,6 +39,8 @@ import java.util.Objects;
 public class AiCodeGeneratorFacade {
 
     private final AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
+
+    private final VueProjectBuilder vueProjectBuilder;
 
     /**
      * 统一入口：根据类型生成并保存代码
@@ -93,7 +97,7 @@ public class AiCodeGeneratorFacade {
             }
             case VUE_PROJECT -> {
                 TokenStream tokenStream = aiCodeGeneratorService.generateVueProjectCodeStream(appId, userMessage);
-                yield processTokenStream(tokenStream);
+                yield processTokenStream(tokenStream, appId);
             }
             default -> {
                 String errorMessage = "不支持的生成类型：" + codeGenTypeEnum.getValue();
@@ -106,9 +110,10 @@ public class AiCodeGeneratorFacade {
      * 将 TokenStream 转换为 Flux<String>，并传递工具调用信息
      *
      * @param tokenStream TokenStream 对象
+     * @param appId       应用ID
      * @return Flux<String> 流式响应
      */
-    private Flux<String> processTokenStream(TokenStream tokenStream) {
+    private Flux<String> processTokenStream(TokenStream tokenStream, Long appId) {
         return Flux.create(sink -> tokenStream
                 .onPartialResponse((String partialResponse) -> {
                     AiResponseMessage aiResponseMessage = new AiResponseMessage(partialResponse);
@@ -122,7 +127,12 @@ public class AiCodeGeneratorFacade {
                     ToolExecutedMessage toolExecutedMessage = new ToolExecutedMessage(toolExecution);
                     sink.next(JSONUtil.toJsonStr(toolExecutedMessage));
                 })
-                .onCompleteResponse((ChatResponse response) ->sink.complete())
+                .onCompleteResponse((ChatResponse response) -> {
+                    // 执行Vue项目构建（同步执行，确保预览时项目已就绪）
+                    String projectPath = AppConstant.CODE_OUTPUT_ROOT_DIR + "/vue_project_" + appId;
+                    vueProjectBuilder.buildProject(projectPath);
+                    sink.complete();
+                })
                 .onError((Throwable error) -> {
                     log.error("处理VUE_PROJECT模式下的tokenStream 出现异常：{}", error.getMessage());
                     sink.error(error);

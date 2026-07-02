@@ -9,8 +9,6 @@ import cn.hutool.json.JSONUtil;
 import com.lin.linaicodemother.ai.model.message.*;
 import com.lin.linaicodemother.ai.tools.BaseTool;
 import com.lin.linaicodemother.ai.tools.ToolManager;
-import com.lin.linaicodemother.constant.AppConstant;
-import com.lin.linaicodemother.core.builder.VueProjectBuilder;
 import com.lin.linaicodemother.model.entity.User;
 import com.lin.linaicodemother.model.enums.ChatHistoryMessageTypeEnum;
 import com.lin.linaicodemother.service.ChatHistoryService;
@@ -31,8 +29,6 @@ import java.util.Set;
 @Component
 @RequiredArgsConstructor
 public class JsonMessageStreamHandler {
-
-    private final VueProjectBuilder vueProjectBuilder;
 
     private final ToolManager toolManager;
 
@@ -62,9 +58,6 @@ public class JsonMessageStreamHandler {
                     String aiResponse = chatHistoryStringBuilder.toString();
                     chatHistoryService.addChatMessage(appId, aiResponse, ChatHistoryMessageTypeEnum.AI.getValue(),
                             loginUser.getId());
-                    // 异步构造 Vue 项目
-                    String projectPath = AppConstant.CODE_OUTPUT_ROOT_DIR + "/vue_project_" + appId;
-                    vueProjectBuilder.buildProjectAsync(projectPath);
                 })
                 // 如果AI回复失败，也要记录错误消息
                 .doOnError(error -> {
