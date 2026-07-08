@@ -18,6 +18,8 @@ import com.lin.linaicodemother.model.dto.app.*;
 import com.lin.linaicodemother.model.entity.App;
 import com.lin.linaicodemother.model.entity.User;
 import com.lin.linaicodemother.model.vo.AppVO;
+import com.lin.linaicodemother.ratelimter.annotation.RateLimit;
+import com.lin.linaicodemother.ratelimter.enums.RateLimitType;
 import com.lin.linaicodemother.service.AppService;
 import com.lin.linaicodemother.service.ProjectDownloadService;
 import com.lin.linaicodemother.service.UserService;
@@ -64,6 +66,7 @@ public class AppController {
      * @return 生成结果流
      */
     @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @RateLimit(limitType = RateLimitType.APPID, rate = 30, rateInterval = 60, message = "AI 对话请求过于频繁，请稍后再试")
     public Flux<ServerSentEvent<String>> chatToGenCode(@RequestParam Long appId,
                                                        @RequestParam String message,
                                                        HttpServletRequest request) {
@@ -126,6 +129,7 @@ public class AppController {
      * @return 应用 id
      */
     @PostMapping("/add")
+    @RateLimit(limitType = RateLimitType.USER, rate = 3, rateInterval = 60, message = "AI 对话请求过于频繁，请稍后再试")
     public BaseResponse<Long> addApp(@RequestBody AppAddRequest appAddRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(appAddRequest == null, ErrorCode.PARAMS_ERROR);
         // 获取当前登录用户
