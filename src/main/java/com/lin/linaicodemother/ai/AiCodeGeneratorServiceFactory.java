@@ -3,6 +3,7 @@ package com.lin.linaicodemother.ai;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.lin.linaicodemother.ai.guardrail.PromptSafetyInputGuardrail;
 import com.lin.linaicodemother.ai.tools.ToolManager;
 import com.lin.linaicodemother.model.enums.CodeGenTypeEnum;
 import com.lin.linaicodemother.service.ChatHistoryService;
@@ -123,6 +124,8 @@ public class AiCodeGeneratorServiceFactory {
                         .hallucinatedToolNameStrategy(toolExecutionRequest -> ToolExecutionResultMessage.from(
                                 toolExecutionRequest, "Error: there is no tool called " + toolExecutionRequest.name()
                         ))
+                        // 添加输入护轨
+                        .inputGuardrails(new PromptSafetyInputGuardrail())
                         .build();
             }
 
@@ -134,6 +137,8 @@ public class AiCodeGeneratorServiceFactory {
                         .chatModel(chatModel)
                         .streamingChatModel(openAiStreamingChatModel)
                         .chatMemory(chatMemory)
+                        // 添加输入护轨
+                        .inputGuardrails(new PromptSafetyInputGuardrail())
                         .build();
             }
         };
