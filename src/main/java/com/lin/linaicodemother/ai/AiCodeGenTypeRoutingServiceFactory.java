@@ -1,5 +1,6 @@
 package com.lin.linaicodemother.ai;
 
+import com.lin.linaicodemother.ai.guardrail.RetryOutputGuardrail;
 import com.lin.linaicodemother.utils.SpringContextUtil;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.service.AiServices;
@@ -24,6 +25,8 @@ public class AiCodeGenTypeRoutingServiceFactory {
         ChatModel chatModel = SpringContextUtil.getBean("routingChatModelPrototype", ChatModel.class);
         return AiServices.builder(AiCodeGenTypeRoutingService.class)
                 .chatModel(chatModel)
+                // 添加输出护轨，为了流式输出，只在路由这里使用，ai对话不使用
+                .outputGuardrails(new RetryOutputGuardrail())
                 .build();
     }
 
